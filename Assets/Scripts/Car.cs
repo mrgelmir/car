@@ -12,6 +12,7 @@ public interface ISpringConfig
 
 public interface IEngineConfig
 {
+    float TopSpeed { get; }
     float GetTorque(float currentSpeed);
     float GetBrakeTorque(float input);
 }
@@ -27,6 +28,8 @@ public class EngineConfig : IEngineConfig
     [SerializeField] private float brakeTorque = 3f;
 
     [SerializeField] private AnimationCurve enginePowerCurve = AnimationCurve.Constant(0f, 1f, 1f);
+
+    public float TopSpeed => topSpeed;
 
     public float GetTorque(float currentSpeed)
     {
@@ -69,6 +72,8 @@ public class TireConfig : ITireConfig
 public class Unpowered : IEngineConfig
 {
     private readonly IEngineConfig child;
+
+    public float TopSpeed => child.TopSpeed;
 
     public Unpowered(IEngineConfig child)
     {
@@ -115,10 +120,10 @@ public class Car : MonoBehaviour, ISpringConfig
     {
         wheels = new List<Wheel>
         {
-            new(wheelRightFront, tireConfig, this, new Unpowered(engineConfig), wheelRightFront.GetChild(0)),
-            new(wheelLeftFront, tireConfig, this, new Unpowered(engineConfig), wheelLeftFront.GetChild(0)),
-            new(wheelRightBack, tireConfig, this, (engineConfig), wheelRightBack.GetChild(0)),
-            new(wheelLeftBack, tireConfig, this, (engineConfig), wheelLeftBack.GetChild(0)),
+            new(wheelRightFront, tireConfig, this, (engineConfig), wheelRightFront.GetChild(0)),
+            new(wheelLeftFront, tireConfig, this, (engineConfig), wheelLeftFront.GetChild(0)),
+            new(wheelRightBack, tireConfig, this, new Unpowered(engineConfig), wheelRightBack.GetChild(0)),
+            new(wheelLeftBack, tireConfig, this, new Unpowered(engineConfig), wheelLeftBack.GetChild(0)),
         };
     }
 

@@ -104,7 +104,7 @@ internal class Wheel
             // keep rolling in the tire direction when not accelerating by applying (part of) the sideways force forwards 
             float steeringVelocity = GetSidewaysVelocity(worldVelocity);
             float sidePercentage = GetSidePercentage(steeringVelocity);
-            float gripRemainder = 1f - tire.GetGrip(sidePercentage);
+            float gripRemainder = 1f;// - tire.GetGrip(sidePercentage);
             float transferredForce = Mathf.Abs(steeringVelocity) * gripRemainder;
 
             float desiredAcceleration = transferredForce / Time.fixedDeltaTime;
@@ -126,7 +126,6 @@ internal class Wheel
 
         // TODO: If world velocity is lower: less drift and more grip
         // How to evaluate that curve? velocity? force? Use wheel mass for this probably
-
         float desiredChange = -steeringVelocity * tire.GetGrip(sidePercentage);
 
         float desiredAcceleration = desiredChange / Time.fixedDeltaTime;

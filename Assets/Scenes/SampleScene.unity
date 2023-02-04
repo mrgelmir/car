@@ -3893,6 +3893,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Car
       objectReference: {fileID: 0}
+    - target: {fileID: 6197532660705975158, guid: 1a14210e16345064294083bf9902fa3d, type: 3}
+      propertyPath: maxSteerAngle
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 6197532660705975158, guid: 1a14210e16345064294083bf9902fa3d, type: 3}
+      propertyPath: engineConfig.engineTorque
+      value: 1.5
+      objectReference: {fileID: 0}
     - target: {fileID: 6197532660705975159, guid: 1a14210e16345064294083bf9902fa3d, type: 3}
       propertyPath: m_RootOrder
       value: 4
