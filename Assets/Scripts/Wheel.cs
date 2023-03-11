@@ -11,6 +11,7 @@ internal class Wheel
 
     private Vector3 worldVelocity = Vector3.zero;
     private WheelVisual wheel;
+    private Vector3 rootPosition;
 
     public Wheel(Transform root, ITireConfig tire, ISpringConfig spring, IEngineConfig engine, Transform visual)
     {
@@ -20,14 +21,16 @@ internal class Wheel
         this.engine = engine;
         this.visual = visual;
 
+        rootPosition = root.position;
         wheel = root.GetComponentInChildren<WheelVisual>();
     }
 
     public void ApplyForce(Rigidbody body)
     {
-        Ray wheelRay = new(root.position, -root.up);
+        rootPosition = root.position;
+        Ray wheelRay = new(rootPosition, -root.up);
         bool contact = Physics.Raycast(wheelRay, out RaycastHit hit, spring.RestDistance);
-        worldVelocity = body.GetPointVelocity(root.position);
+        worldVelocity = body.GetPointVelocity(rootPosition);
 
         wheel.SetData(worldVelocity.magnitude, contact);
 
@@ -37,7 +40,6 @@ internal class Wheel
             return;
         }
 
-        Debug.DrawLine(root.position, root.position + worldVelocity, Color.green);
 
         visual.localPosition = Vector3.down * hit.distance;
 
@@ -45,12 +47,20 @@ internal class Wheel
         float torque = GetAcceleration(body);
         float steer = GetSteerForce();
 
+        Vector3 up = root.up * liftForce;
+        Vector3 forward = root.forward * torque;
+        Vector3 right = root.right * steer;
 
-        Vector3 finalForce = root.up * liftForce
-            + root.forward * torque
-            + root.right * steer;
 
-        body.AddForceAtPosition(finalForce, root.position);
+        // Debug.DrawLine(root.position, rootPosition + worldVelocity, Color.grey);
+        // Debug.DrawLine(rootPosition, rootPosition + up / 1000f, Color.green);
+        Debug.DrawLine(rootPosition, rootPosition + right / 1000f, Color.red);
+        Debug.DrawLine(rootPosition, rootPosition + forward / 1000f, Color.blue);
+
+
+        Vector3 finalForce = up + forward + right;
+
+        body.AddForceAtPosition(finalForce, rootPosition);
     }
 
     private float GetLiftForce(RaycastHit hit)
@@ -67,6 +77,7 @@ internal class Wheel
     {
         float accelerationInput = Input.GetAxis("Vertical");
 
+        float forwardVelocity = GetForwardVelocity(worldVelocity);
 
         // Acceleration
         if (accelerationInput > float.Epsilon)
@@ -74,8 +85,7 @@ internal class Wheel
             // TODO: Engine only starts providing based on total body velocity, not forward velocity
             // it should evaluate its torque based on current output, not on body velocity
 
-            float speed = Vector3.Dot(body.transform.forward, body.velocity);
-            float torque = engine.GetTorque(speed) * accelerationInput;
+            float torque = engine.GetTorque(forwardVelocity) * accelerationInput;
             // Debug.DrawLine(root.position, root.position + root.forward * torque / 100f, Color.blue);
 
             return torque;
@@ -85,9 +95,6 @@ internal class Wheel
         if (body.velocity.magnitude > 0f && accelerationInput < -float.Epsilon)
         {
             // Negate the speed we have in the forward direction
-            float forwardVelocity = GetForwardVelocity(worldVelocity);
-
-            // brake
             float desiredVelocity = -forwardVelocity;
             float maxBrakeForce = desiredVelocity / Time.fixedDeltaTime;
             float brakeTorque = maxBrakeForce * engine.GetBrakeTorque(Mathf.Abs(accelerationInput));
@@ -104,11 +111,11 @@ internal class Wheel
             // keep rolling in the tire direction when not accelerating by applying (part of) the sideways force forwards 
             float steeringVelocity = GetSidewaysVelocity(worldVelocity);
             float sidePercentage = GetSidePercentage(steeringVelocity);
-            float gripRemainder = 1f;// - tire.GetGrip(sidePercentage);
+            float gripRemainder = 1f; // - tire.GetGrip(sidePercentage);
             float transferredForce = Mathf.Abs(steeringVelocity) * gripRemainder;
 
             float desiredAcceleration = transferredForce / Time.fixedDeltaTime;
-            Debug.DrawLine(root.position, root.position + root.forward * desiredAcceleration / 100f, Color.magenta);
+            // Debug.DrawLine(root.position, root.position + root.forward * desiredAcceleration / 100f, Color.magenta);
 
             return desiredAcceleration;
         }
